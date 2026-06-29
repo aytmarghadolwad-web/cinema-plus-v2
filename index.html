@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinema Plus - IMDb Style</title>
+    <style>
+        body { background: #121212; color: #fff; font-family: 'Roboto', Arial, sans-serif; margin: 0; padding: 20px;}
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: #f5c518; font-size: 32px; margin: 0; } /* بحال لوجو IMDb */
+        h2 { border-left: 4px solid #e50914; padding-left: 10px; margin-top: 40px; }
+      .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; margin-bottom: 30px;}
+      .movie-card { background: #1f1f1f; border-radius: 6px; overflow: hidden; transition: transform 0.2s; }
+      .movie-card:hover { transform: scale(1.05); } /* كيطلع شوية منين دوزي عليه */
+      .movie-card img { width: 100%; height: 240px; object-fit: cover; display: block; }
+      .movie-info { padding: 10px; }
+      .movie-title { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .movie-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 13px;}
+      .rating { color: #f5c518; font-weight: bold; } /* النجمة الصفرة */
+      .movie-year { color: #aaa; }
+      .trailer-btn { background: #1f1f1f; border: 1px solid #e50914; color: #e50914; padding: 8px; margin: 0 10px 10px 10px; width: calc(100% - 20px); cursor: pointer; border-radius: 4px; font-size: 12px; font-weight: bold;} /* الزر الاحمر */
+      .trailer-btn:hover { background: #e50914; color: #fff; }
+        a { text-decoration: none; color: #fff; }
+        footer { text-align: center; margin-top: 50px; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎬 Cinema Plus</h1>
+        <p>Your IMDb Style Movie Database</p>
+    </header>
+
+    <main>
+        <h2>🔥 Trending This Week</h2>
+        <div id="trending-movies" class="movie-grid"></div>
+
+        <h2>⭐ Popular Movies</h2> 
+        <div id="popular-movies" class="movie-grid"></div>
+    </main>
+
+    <footer>
+        <p>Data from TMDB API | © 2025 Cinema Plus</p>
+    </footer>
+
+    <script>
+    const API_KEY = '7d672e79dc7e2827cc6fb371eb53a4f5';
+    const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+
+    // دالة وحدة لعرض الأفلام
+    function displayMovies(data, gridId) {
+        const grid = document.getElementById(gridId);
+        grid.innerHTML = '';
+        data.results.slice(0, 12).forEach(movie => {
+            const rating = movie.vote_average? movie.vote_average.toFixed(1) : 'N/A';
+            const year = movie.release_date? movie.release_date.split('-')[0] : 'N/A';
+            const poster = movie.poster_path? `${IMAGE_BASE}${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image';
+
+            grid.innerHTML += `
+                <div class="movie-card">
+                    <a href="movie/${movie.id}.html">
+                        <img src="${poster}" alt="${movie.title}" loading="lazy">
+                        <div class="movie-info">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-meta">
+                                <span class="rating">⭐ ${rating}</span>
+                                <span class="movie-year">${year}</span>
+                            </div>
+                        </div>
+                    </a>
+                    <button class="trailer-btn" onclick="getTrailer(${movie.id})">▶️ Bande-annonce</button>
+                </div>
+            `;
+        });
+    }
+
+    // جيب الأفلام اللي طالعين هاد السيمانة
+    fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`)
+  .then(res => res.json())
+  .then(data => displayMovies(data, 'trending-movies'));
+
+    // جيب الأفلام المشهورين
+    fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}`)
+  .then(res => res.json())
+  .then(data => displayMovies(data, 'popular-movies'));
+
+    // دالة الترايلر
+    function getTrailer(movieId) {
+        fetch(`https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}`)
+  .then(res => res.json())
+  .then(data => {
+            const trailer = data.results.find(vid => vid.type === "Trailer" && vid.site === "YouTube");
+            if(trailer) window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank');
+            else alert('Aucune bande-annonce trouvée');
+      })
+  .catch(() => alert('Erreur de chargement du trailer'));
+    }
+    </script>
+</body>
+</html>
